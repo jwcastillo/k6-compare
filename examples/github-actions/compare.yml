@@ -1,0 +1,55 @@
+# k6 Performance Gate
+#
+# NOTE: The baseline artifact (k6-baseline-summary) must exist from a prior
+# push to main before the PR regression gate job can succeed. Push to main
+# once to bootstrap the baseline, then open PRs against it.
+#
+# Exit codes produced by k6-compare:
+#   0 = no regression      → workflow passes → PR can merge
+#   3 = regression detected → workflow fails  → PR blocked
+#   5 = load-model mismatch → workflow fails  → add --force or --assume-* flags
+#   1 = parse/IO error      → workflow fails  → check summary file paths
+
+name: k6 Performance Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  k6-baseline:
+    name: Run k6 and store baseline (main branch)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1.2.1
+      - name: Run k6 load test
+        run: k6 run --summary-export=summary.json examples/load-test.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: k6-baseline-summary
+          path: summary.json
+          if-no-files-found: error
+
+  k6-regression-gate:
+    name: Compare against baseline (PRs only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1.2.1
+      - name: Run k6 load test (current branch)
+        run: k6 run --summary-export=current-summary.json examples/load-test.js
+      - uses: actions/download-artifact@v4
+        with:
+          name: k6-baseline-summary
+          path: baseline/
+      - name: Install k6-compare
+        run: go install github.com/jwcastillo/k6-compare@latest
+      - name: Gate regression
+        # Exit code 3 = regression detected → workflow fails → PR blocked
+        # Exit code 0 = no regression → workflow passes → PR can merge
+        # See: https://github.com/jwcastillo/k6-compare#exit-codes
+        run: k6-compare baseline/summary.json current-summary.json

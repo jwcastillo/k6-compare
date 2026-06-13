@@ -1,0 +1,64 @@
+{
+  "version": "1.0.0",
+  "config": {
+    "duration": 1.0,
+    "execution": "local",
+    "script": "test.js"
+  },
+  "metadata": {
+    "k6Version": "0.55.0",
+    "generatedAt": "2026-06-12T10:00:00Z"
+  },
+  "results": {
+    "metrics": [
+      {
+        "name": "http_reqs",
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 3
+        }
+      },
+      {
+        "name": "vus",
+        "type": "gauge",
+        "contains": "default",
+        "values": {
+          "value": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        }
+      },
+      {
+        "name": "checks",
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "matches": 45,
+          "total": 60,
+          "rate": 0.75
+        }
+      },
+      {
+        "name": "http_req_duration",
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 15.0,
+          "min": 10.0,
+          "med": 15.0,
+          "max": 20.0,
+          "p(90)": 19.0,
+          "p(95)": 19.5,
+          "p(99)": 19.9
+        }
+      }
+    ],
+    "checks": {
+      "metrics": [],
+      "results": [
+        {"name": "check1", "passes": 30, "fails": 0}
+      ]
+    }
+  }
+}

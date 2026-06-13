@@ -1,0 +1,74 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "child": {
+                "name": "child",
+                "path": "::child",
+                "id": "f41cbb53a398ec1c9fb3d33e20c9b040",
+                "groups": {},
+                "checks": {
+                    "check1": {
+                        "name": "check1",
+                        "path": "::child::check1",
+                        "id": "6289a7a06253a1c3f6137dfb25695563",
+                        "passes":30,
+                        "fails": 0
+                    },
+                    "check2": {
+                        "name": "check2",
+                        "path": "::child::check2",
+                        "id": "06f5922794bef0d4584ba76a49893e1f",
+                        "passes": 5,
+                        "fails": 10
+                    },
+                    "check3": {
+                        "name": "check3",
+                        "path": "::child::check3",
+                        "id": "c7553eca92d3e034b5808332296d304a",
+                        "passes": 10,
+                        "fails": 5
+                    }
+                }
+            }
+        },
+        "checks": {}
+    },
+    "metrics": {
+        "checks": {
+            "value": 0.75,
+            "passes": 45,
+            "fails": 15,
+            "thresholds": {
+                "rate>70": false
+            }
+        },
+        "http_reqs": {
+            "count": 3,
+            "rate": 3,
+            "thresholds": {
+                "rate<100": true
+            }
+        },
+        "my_trend": {
+            "avg": 15,
+            "max": 20,
+            "med": 15,
+            "min": 10,
+            "p(90)": 19,
+            "p(95)": 19.5,
+            "p(99)": 19.9,
+            "count": 3,
+            "thresholds": {
+                "my_trend<1000": true
+            }
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 1
+        }
+    }
+}

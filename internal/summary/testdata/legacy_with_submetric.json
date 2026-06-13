@@ -1,0 +1,45 @@
+{
+  "root_group": {
+    "groups": [],
+    "checks": [],
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "options": {
+    "summaryTrendStats": ["avg", "min", "med", "max", "p(90)", "p(95)"],
+    "summaryTimeUnit": "",
+    "noColor": false
+  },
+  "state": {
+    "isStdErrTTY": false,
+    "isStdOutTTY": false,
+    "testRunDurationMs": 1000
+  },
+  "metrics": {
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 15.0,
+        "min": 10.0,
+        "med": 15.0,
+        "max": 20.0,
+        "p(90)": 19.0,
+        "p(95)": 19.5
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 14.0,
+        "min": 10.0,
+        "med": 14.0,
+        "max": 18.0,
+        "p(90)": 17.0,
+        "p(95)": 17.5
+      }
+    }
+  }
+}

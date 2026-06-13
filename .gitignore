@@ -1,0 +1,7 @@
+# Build artifacts
+/k6-compare
+*.test
+
+# Go
+*.o
+*.a

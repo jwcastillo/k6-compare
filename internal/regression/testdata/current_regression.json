@@ -1,0 +1,66 @@
+{
+  "state": { "testRunDurationMs": 10000 },
+  "metrics": {
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 107,
+        "min": 52,
+        "med": 98,
+        "max": 210,
+        "p(90)": 149,
+        "p(95)": 184,
+        "p(99)": 195,
+        "p(99.9)": 199
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 7,
+        "fails": 993,
+        "rate": 0.0065
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1000,
+        "rate": 100.0
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1000,
+        "rate": 100.0
+      }
+    },
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 117,
+        "min": 57,
+        "med": 108,
+        "max": 220,
+        "p(90)": 159,
+        "p(95)": 174,
+        "p(99)": 205
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 10,
+        "min": 1,
+        "max": 10
+      }
+    }
+  }
+}
