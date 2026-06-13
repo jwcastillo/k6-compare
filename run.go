@@ -68,22 +68,6 @@ type JSONFinding struct {
 	Gated        bool    `json:"gated"`
 }
 
-// defaultFlags returns a Flags struct with all threshold sentinels initialized to -1.
-// This matches the cobra default values so that Flags{} behaves like "use built-in defaults".
-func defaultFlags() Flags {
-	return Flags{
-		ThresholdP50:               -1,
-		ThresholdP90:               -1,
-		ThresholdP95:               -1,
-		ThresholdP99:               -1,
-		ThresholdP999:              -1,
-		ThresholdErrorRate:         -1,
-		ThresholdRPS:               -1,
-		ThresholdIterationDuration: -1,
-		ThresholdDefault:           -1,
-	}
-}
-
 // applyFlagDefaults sets any threshold field that is 0 (uninitialized Go zero-value)
 // to -1 (the sentinel meaning "use built-in default"). This ensures that Flags{}
 // behaves the same as the cobra CLI defaults.
@@ -290,7 +274,9 @@ func formatValue(f regression.Finding, v float64) string {
 	metricType := strings.ToLower(f.Type)
 	metricName := strings.ToLower(f.Name)
 
-	if metricType == "trend" && (strings.Contains(metricName, "duration") || strings.Contains(metricName, "time") || f.Name == "http_req_duration") {
+	isDurationTrend := strings.Contains(metricName, "duration") ||
+		strings.Contains(metricName, "time") || f.Name == "http_req_duration"
+	if metricType == "trend" && isDurationTrend {
 		return fmt.Sprintf("%.2fms", v)
 	}
 	if metricType == "rate" {
@@ -300,7 +286,10 @@ func formatValue(f regression.Finding, v float64) string {
 }
 
 // renderTable renders the human-readable regression table to stdout (D-11).
-func renderTable(stdout io.Writer, baselineFile, currentFile string, mc loadmodel.ModelComparison, report regression.Report) {
+func renderTable(
+	stdout io.Writer, baselineFile, currentFile string,
+	mc loadmodel.ModelComparison, report regression.Report,
+) {
 	// Print header info.
 	fmt.Fprintf(stdout, "baseline: %s\n", baselineFile)
 	fmt.Fprintf(stdout, "current:  %s\n", currentFile)
@@ -371,7 +360,10 @@ func renderTable(stdout io.Writer, baselineFile, currentFile string, mc loadmode
 }
 
 // renderJSON renders the structured JSON report to stdout (D-13).
-func renderJSON(stdout io.Writer, baselineFile, currentFile string, mc loadmodel.ModelComparison, report regression.Report, exitCode int) {
+func renderJSON(
+	stdout io.Writer, baselineFile, currentFile string,
+	mc loadmodel.ModelComparison, report regression.Report, exitCode int,
+) {
 	metrics := make([]JSONFinding, 0, len(report.Findings))
 	for _, f := range report.Findings {
 		dirStr := "lower_is_better"

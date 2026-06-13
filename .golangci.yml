@@ -10,29 +10,41 @@ linters:
     - unused
     - misspell
     - whitespace
-    - gofmt
-    - goimports
-    - gofumpt
     - revive
     - gosec
     - lll
     - funlen
     - gochecknoglobals
     - nolintlint
+  settings:
+    errcheck:
+      # CLI output to stdout/stderr — write errors are not actionable
+      exclude-functions:
+        - fmt.Fprintln
+        - fmt.Fprintf
+        - fmt.Fprint
+    lll:
+      line-length: 120
+    funlen:
+      lines: 120
+      statements: 90
+  exclusions:
+    rules:
+      - path: '_test\.go'
+        linters:
+          - funlen
+          - gosec
+          - gochecknoglobals
+          - errcheck
+      - path: 'main\.go'
+        linters:
+          - gochecknoglobals
+      # Reading user-specified summary files is this tool's purpose
+      - linters: [gosec]
+        text: "G304|G703|G705"
 
-linters-settings:
-  lll:
-    line-length: 120
-  funlen:
-    lines: 80
-    statements: 60
-
-issues:
-  exclude-rules:
-    - path: "_test\\.go"
-      linters:
-        - funlen
-        - gosec
-    - path: "cmd/"
-      linters:
-        - gochecknoglobals
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports

@@ -27,6 +27,8 @@ type builtinMetricDef struct {
 
 // builtinMetrics is the ordered list of built-in k6 metrics processed by Compare().
 // Gauge metrics (vus, etc.) are intentionally excluded — they are instantaneous samples.
+//
+//nolint:gochecknoglobals // read-only data table of built-in metric definitions
 var builtinMetrics = []builtinMetricDef{
 	{
 		name:             "http_req_duration",
@@ -55,7 +57,7 @@ var builtinMetrics = []builtinMetricDef{
 		statKeys:         []string{"rate"},
 		direction:        DirectionLowerIsBetter,
 		defaultThreshold: 50.0,
-		flagThresholdForKey: func(key string, opts Options) float64 {
+		flagThresholdForKey: func(_ string, opts Options) float64 {
 			return opts.ThresholdErrorRate
 		},
 	},
@@ -64,7 +66,7 @@ var builtinMetrics = []builtinMetricDef{
 		statKeys:         []string{"rate"},
 		direction:        DirectionHigherIsBetter,
 		defaultThreshold: 10.0,
-		flagThresholdForKey: func(key string, opts Options) float64 {
+		flagThresholdForKey: func(_ string, opts Options) float64 {
 			return opts.ThresholdRPS
 		},
 	},
@@ -73,7 +75,7 @@ var builtinMetrics = []builtinMetricDef{
 		statKeys:         []string{"p(95)", "avg"}, // prefer p(95); fall back to avg
 		direction:        DirectionLowerIsBetter,
 		defaultThreshold: 10.0,
-		flagThresholdForKey: func(key string, opts Options) float64 {
+		flagThresholdForKey: func(_ string, opts Options) float64 {
 			return opts.ThresholdIterationDuration
 		},
 	},
@@ -82,13 +84,15 @@ var builtinMetrics = []builtinMetricDef{
 		statKeys:         []string{"count"},
 		direction:        DirectionLowerIsBetter,
 		defaultThreshold: 0, // report-only, no default threshold
-		flagThresholdForKey: func(key string, opts Options) float64 {
+		flagThresholdForKey: func(_ string, _ Options) float64 {
 			return -1 // no flag for iterations
 		},
 	},
 }
 
 // builtinMetricNames is the set of built-in metric names for quick lookup.
+//
+//nolint:gochecknoglobals // read-only set derived from builtinMetrics
 var builtinMetricNames = func() map[string]struct{} {
 	m := make(map[string]struct{}, len(builtinMetrics))
 	for _, bm := range builtinMetrics {
@@ -145,6 +149,8 @@ func isRegressed(changePct float64, dir Direction, threshold float64) bool {
 //   - Custom: any Trend/Rate/Counter present in both summaries and not in the built-in list
 //
 // Gauge metrics are never compared (they are instantaneous samples, not aggregates).
+//
+//nolint:funlen // linear, table-driven comparison pipeline; splitting hurts readability
 func Compare(baseline, current summary.ParsedSummary, opts Options) Report {
 	var findings []Finding
 	var warnings []string

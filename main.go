@@ -12,11 +12,11 @@ import (
 
 // buildRootCmd creates the cobra command with all flags registered (per D-04).
 // stdout and stderr are injectable for testability.
-func buildRootCmd(stdout, stderr io.Writer) (*cobra.Command, *Flags) {
+func buildRootCmd(_, _ io.Writer) (*cobra.Command, *Flags) {
 	var flags Flags
 	cmd := &cobra.Command{
-		Use:           "k6-compare <baseline.json> <current.json>",
-		Short:         "Detect performance regressions between two k6 summary files",
+		Use:   "k6-compare <baseline.json> <current.json>",
+		Short: "Detect performance regressions between two k6 summary files",
 		Long: `k6-compare compares two k6 summary JSON files and reports performance regressions.
 
 Exit codes:
@@ -28,7 +28,7 @@ Exit codes:
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		// RunE is a no-op; exit code is handled by run() called from main().
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return nil
 		},
 	}

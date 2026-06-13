@@ -219,8 +219,8 @@ func TestCompare(t *testing.T) {
 							Type:     summary.MetricTypeTrend,
 							Contains: "time",
 							Values: map[string]float64{
-								"avg":    100,
-								"p(95)":  160,
+								"avg":     100,
+								"p(95)":   160,
 								"p(99.9)": 198,
 							},
 						},
@@ -314,8 +314,8 @@ func TestCompare(t *testing.T) {
 				}
 				return ps
 			}(),
-			current:  baselineNR,
-			opts:     defaultOpts(),
+			current: baselineNR,
+			opts:    defaultOpts(),
 			assert: func(t *testing.T, r regression.Report) {
 				// Primary requirement: no panic. Verify Compare() ran.
 				// http_req_duration and http_reqs are present in both files.
