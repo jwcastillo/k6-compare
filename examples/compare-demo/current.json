@@ -1,0 +1,72 @@
+{
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": {},
+    "checks": {
+      "status is 200": { "name": "status is 200", "passes": 162050, "fails": 612 },
+      "body not empty": { "name": "body not empty", "passes": 162662, "fails": 0 }
+    }
+  },
+  "options": {
+    "summaryTrendStats": ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)", "p(99.9)"],
+    "scenarios": {
+      "smoke": {
+        "executor": "constant-vus",
+        "vus": 50,
+        "duration": "60s",
+        "gracefulStop": "30s"
+      }
+    }
+  },
+  "state": {
+    "testRunDurationMs": 60004,
+    "isStdOutTTY": false,
+    "isStdErrTTY": false
+  },
+  "metrics": {
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": { "count": 162662, "rate": 2710.95 }
+    },
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 17.88,
+        "min": 3.20,
+        "med": 13.95,
+        "max": 511.70,
+        "p(90)": 27.10,
+        "p(95)": 35.40,
+        "p(99)": 78.51,
+        "p(99.9)": 205.30
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": { "rate": 0.0038, "passes": 612, "fails": 162050 }
+    },
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 318.4,
+        "min": 303.5,
+        "med": 314.2,
+        "max": 811.9,
+        "p(90)": 327.6,
+        "p(95)": 335.8,
+        "p(99)": 379.1,
+        "p(99.9)": 506.0
+      }
+    },
+    "vus": { "type": "gauge", "contains": "default", "values": { "value": 50, "min": 1, "max": 50 } },
+    "vus_max": { "type": "gauge", "contains": "default", "values": { "value": 50, "min": 50, "max": 50 } },
+    "data_received": { "type": "counter", "contains": "data", "values": { "count": 1171166400, "rate": 19519000.0 } },
+    "data_sent": { "type": "counter", "contains": "data", "values": { "count": 14639580, "rate": 243993.0 } }
+  }
+}

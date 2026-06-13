@@ -1,55 +1,68 @@
 # k6 Performance Gate
 #
-# NOTE: The baseline artifact (k6-baseline-summary) must exist from a prior
-# push to main before the PR regression gate job can succeed. Push to main
-# once to bootstrap the baseline, then open PRs against it.
+# Runs a k6 smoke test on every pull request and blocks the merge if there is
+# a performance regression against a baseline that is versioned in the repo.
+#
+# Flow:
+#   1. Install k6 and k6-compare
+#   2. Run the script -> produces summary.json (via handleSummary)
+#   3. k6-compare baseline.json summary.json -> exit 3 if there is a regression
+#
+# The baseline (examples/compare-demo/baseline.json) is updated manually via a
+# PR when a performance change is expected and accepted. Versioning it in git
+# makes that "this is the new normal" decision explicit and reviewable.
 #
 # Exit codes produced by k6-compare:
-#   0 = no regression      → workflow passes → PR can merge
-#   3 = regression detected → workflow fails  → PR blocked
-#   5 = load-model mismatch → workflow fails  → add --force or --assume-* flags
-#   1 = parse/IO error      → workflow fails  → check summary file paths
+#   0 = no regression      -> workflow passes -> PR can merge
+#   3 = regression detected -> workflow fails  -> PR blocked
+#   5 = load-model mismatch -> workflow fails  -> add --force or --assume-* flags
+#   1 = parse/IO error      -> workflow fails  -> check summary file paths
 
 name: k6 Performance Gate
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  k6-baseline:
-    name: Run k6 and store baseline (main branch)
+  load-gate:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
-      - uses: grafana/setup-k6-action@v1.2.1
-      - name: Run k6 load test
-        run: k6 run --summary-export=summary.json examples/load-test.js
-      - uses: actions/upload-artifact@v4
-        with:
-          name: k6-baseline-summary
-          path: summary.json
-          if-no-files-found: error
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  k6-regression-gate:
-    name: Compare against baseline (PRs only)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: grafana/setup-k6-action@v1.2.1
-      - name: Run k6 load test (current branch)
-        run: k6 run --summary-export=current-summary.json examples/load-test.js
-      - uses: actions/download-artifact@v4
+      - name: Install k6
+        uses: grafana/setup-k6-action@v1.2.1
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          name: k6-baseline-summary
-          path: baseline/
+          go-version: 'stable'
+
       - name: Install k6-compare
         run: go install github.com/jwcastillo/k6-compare@latest
-      - name: Gate regression
-        # Exit code 3 = regression detected → workflow fails → PR blocked
-        # Exit code 0 = no regression → workflow passes → PR can merge
-        # See: https://github.com/jwcastillo/k6-compare#exit-codes
-        run: k6-compare baseline/summary.json current-summary.json
+
+      - name: Run load test
+        # smoke.js writes summary.json into the working dir via handleSummary
+        run: k6 run examples/scripts/smoke.js
+        env:
+          TARGET_URL: ${{ vars.TARGET_URL || 'https://test.k6.io' }}
+
+      - name: Compare against baseline
+        run: |
+          k6-compare \
+            examples/compare-demo/baseline.json \
+            summary.json \
+            --threshold-p99 10 \
+            --threshold-p999 15 \
+            --threshold-error-rate 50 \
+            --threshold-rps 10
+
+      - name: Upload summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary
+          path: summary.json
+          retention-days: 30
