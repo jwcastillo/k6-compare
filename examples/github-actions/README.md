@@ -1,19 +1,27 @@
 # GitHub Actions: k6 Performance Gate
 
-This directory contains a GitHub Actions workflow that runs k6 load tests on every push to `main`, stores the result as a baseline artifact, and compares subsequent pull requests against that baseline using `k6-compare`. Any regression beyond the configured thresholds causes the workflow to fail, blocking the merge.
+This directory contains a GitHub Actions workflow ([`compare.yml`](compare.yml)) that runs a k6 load test on every pull request and compares the result against a baseline **versioned in the repository** using `k6-compare`. Any regression beyond the configured thresholds causes the workflow to fail, blocking the merge.
 
 ## What the workflow does
 
-1. **On push to `main`** — the `k6-baseline` job runs the k6 test and uploads `summary.json` as a GitHub Actions artifact named `k6-baseline-summary`.
-2. **On pull requests** — the `k6-regression-gate` job runs the k6 test on the PR branch, downloads the baseline artifact, installs `k6-compare`, and runs the comparison. The workflow passes or fails based on the `k6-compare` exit code.
+On every pull request, the `load-gate` job:
 
-Because GitHub Actions treats any non-zero exit code as a workflow failure, no explicit conditional check is needed — the `k6-compare` command itself gates the merge.
+1. Installs k6 and `k6-compare` (`go install github.com/jwcastillo/k6-compare@latest`).
+2. Runs `examples/scripts/smoke.js`, which writes `summary.json` via `handleSummary`.
+3. Runs `k6-compare examples/compare-demo/baseline.json summary.json` with the configured thresholds.
+
+Because GitHub Actions treats any non-zero exit code as a workflow failure, no explicit conditional is needed — the `k6-compare` command itself gates the merge.
+
+## Why a versioned baseline
+
+The baseline lives in the repo at `examples/compare-demo/baseline.json`. Updating it is a deliberate, reviewable PR: when a performance change is expected and accepted, you commit the new baseline, and that commit is the explicit record of "this is the new normal."
+
+This trades the zero-setup of an ephemeral artifact baseline for an auditable one — there is no bootstrap push required, the gate is reproducible from any checkout, and the history of the baseline file is the history of your accepted performance budget.
 
 ## Prerequisites
 
-- **A k6 test script** at `examples/load-test.js` (or update the `run` step to point to your script).
-- **Go available on the runner** — the `ubuntu-latest` runner includes Go, which is needed for `go install github.com/jwcastillo/k6-compare@latest`.
-- **Bootstrap push** — the baseline artifact must exist from a prior main-branch run. Push to `main` once before opening PRs to generate the first baseline.
+- **A k6 script** that emits `summary.json` via `handleSummary` (see `examples/scripts/smoke.js`). The `summaryTrendStats` must include `p(99)` and `p(99.9)` — k6 omits these tail percentiles by default, and `k6-compare` cannot gate on what is not in the summary.
+- **A committed baseline** at `examples/compare-demo/baseline.json`. Generate one by running the script locally (`k6 run examples/scripts/smoke.js`) and committing the resulting `summary.json`.
 
 ## Exit code reference
 
@@ -26,27 +34,20 @@ Because GitHub Actions treats any non-zero exit code as a workflow failure, no e
 
 ## Customizing thresholds
 
-By default, `k6-compare` gates on: latency percentiles +10%, error rate +50% relative, and RPS -10%. All thresholds are overridable via flags in the `Gate regression` step.
-
-```yaml
-- name: Gate regression
-  run: k6-compare --threshold-p95 15 --threshold-rps 5 baseline/summary.json current-summary.json
-```
-
-Common overrides:
+The `Compare against baseline` step gates on latency percentiles, error rate, and RPS. All thresholds are overridable via flags:
 
 ```bash
 # Tighten p95 to 5%
-k6-compare --threshold-p95 5 baseline.json current.json
+k6-compare --threshold-p95 5 baseline.json summary.json
 
 # Relax error rate to 100% relative (allow doubling)
-k6-compare --threshold-error-rate 100 baseline.json current.json
+k6-compare --threshold-error-rate 100 baseline.json summary.json
 
-# Set threshold for custom metrics
-k6-compare --threshold-default 20 baseline.json current.json
+# Set a threshold for custom metrics
+k6-compare --threshold-default 20 baseline.json summary.json
 
-# Report only — no gating (informational PR comment use case)
-k6-compare --no-default-thresholds baseline.json current.json
+# Report only — no gating (informational use case)
+k6-compare --no-default-thresholds baseline.json summary.json
 ```
 
 ## Handling load-model mismatches (exit code 5)
@@ -54,21 +55,15 @@ k6-compare --no-default-thresholds baseline.json current.json
 If you know both runs use a closed-model executor (`constant-vus`, `ramping-vus`), suppress the heuristic:
 
 ```yaml
-- name: Gate regression
-  run: k6-compare --assume-closed-model baseline/summary.json current-summary.json
+- name: Compare against baseline
+  run: k6-compare --assume-closed-model examples/compare-demo/baseline.json summary.json
 ```
 
 If you want the regression report regardless of model mismatch:
 
 ```yaml
-- name: Gate regression
-  run: k6-compare --force baseline/summary.json current-summary.json
+- name: Compare against baseline
+  run: k6-compare --force examples/compare-demo/baseline.json summary.json
 ```
 
 See [DECISIONS.md](../../DECISIONS.md#4-load-model-heuristic-and-its-limitation) for a full explanation of the heuristic and its known false positives.
-
-## Bootstrapping note
-
-The `k6-baseline` job only runs on pushes to `main`. The first time you add this workflow, you must push to `main` once to generate the baseline artifact before any PR can be successfully gated. Subsequent PRs will download the artifact from the most recent main-branch run.
-
-If a PR arrives before a baseline exists, the `actions/download-artifact` step will fail with "artifact not found." This is expected — push to main first to bootstrap.
